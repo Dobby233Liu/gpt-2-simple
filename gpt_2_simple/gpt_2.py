@@ -478,16 +478,13 @@ def generate(sess,
         for i in range(batch_size):
             generated += 1
             gen_text = enc.decode(out[i])
-            if prefix:
+            if prefix and include_prefix:
+                # This adds the prefix to the text? (TODO: check) I checked include_prefix
+                # to try "fixing" minimaxir#153, which is due of a design choice (so it really should be labelled wontfix there)
                 gen_text = enc.decode(context_tokens[:1]) + gen_text
             if truncate:
                 truncate_esc = re.escape(truncate)
-                if prefix and not include_prefix:
-                    prefix_esc = re.escape(prefix)
-                    pattern = '(?:{})(.*?)(?:{})'.format(prefix_esc,
-                                                         truncate_esc)
-                else:
-                    pattern = '(.*?)(?:{})'.format(truncate_esc)
+                pattern = '(.*?)(?:{})'.format(truncate_esc)
 
                 trunc_text = re.search(pattern, gen_text, re.S)
                 if trunc_text:
