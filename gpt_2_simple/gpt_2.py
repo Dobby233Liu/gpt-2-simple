@@ -325,9 +325,9 @@ def finetune(sess,
             if steps > 0 and counter == (counter_base + steps):
                 save()
                 return
-            if (counter - 1) % save_every == 0 and counter > 1:
+            if counter > 1 and (counter - 1) % save_every == 0:
                 save()
-            if (counter - 1) % sample_every == 0 and counter > 1:
+            if counter > 1 and (counter - 1) % sample_every == 0:
                 generate_samples()
 
             if accumulate_gradients > 1:
@@ -479,10 +479,11 @@ def generate(sess,
         for i in range(batch_size):
             generated += 1
             gen_text = enc.decode(out[i])
-            if prefix and include_prefix:
-                # This adds the prefix to the text? (TODO: check) I checked include_prefix
-                # to try "fixing" minimaxir#153, which is due of a design choice (so it really should be labelled wontfix there)
-                gen_text = enc.decode(context_tokens[:1]) + gen_text
+            if prefix:
+                if not include_prefix:
+                    gen_text = gen_text[len(context_tokens[1:]):]
+                else:
+                    gen_text = enc.decode(context_tokens[:1]) + gen_text
             if truncate:
                 truncate_esc = re.escape(truncate)
                 pattern = '(.*?)(?:{})'.format(truncate_esc)
