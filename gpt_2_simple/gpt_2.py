@@ -481,7 +481,7 @@ def generate(sess,
             gen_text = enc.decode(out[i])
             if prefix:
                 if not include_prefix:
-                    gen_text = gen_text[len(context_tokens[1:]):]
+                    gen_text = gen_text[len(prefix[1:]):]
                 else:
                     gen_text = enc.decode(context_tokens[:1]) + gen_text
             if truncate:
