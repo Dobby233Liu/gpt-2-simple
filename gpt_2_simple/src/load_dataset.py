@@ -36,8 +36,6 @@ def load_dataset(enc, path, combine):
                 fp.readline()   # skip header
                 reader = csv.reader(fp)
                 for row in reader:
-                    if len(row) < 0:
-                        raise IndexError("too few row in line (warning: header skipped)")
                     raw_text += start_token + row[0] + end_token + "\n"
         else:
             # Plain text
