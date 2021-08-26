@@ -322,13 +322,10 @@ def finetune(sess,
 
     try:
         while True:
+
             if steps > 0 and counter == (counter_base + steps):
                 save()
                 return
-            if counter > 1 and (counter - 1) % save_every == 0:
-                save()
-            if counter > 1 and (counter - 1) % sample_every == 0:
-                generate_samples()
 
             if accumulate_gradients > 1:
                 sess.run(opt_reset)
@@ -355,9 +352,15 @@ def finetune(sess,
                         loss=v_loss,
                         avg=avg_loss[0] / avg_loss[1]))
 
+            if counter > 1 and save_every >= 1 and (counter - 1) % save_every == 0:
+                save()
+            if counter > 1 and sample_every >= 1 and (counter - 1) % sample_every == 0:
+                generate_samples()
+
             counter += 1
+
     except KeyboardInterrupt:
-        print('interrupted')
+        print('Interrupted')
         save()
 
 
