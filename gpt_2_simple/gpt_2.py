@@ -105,9 +105,9 @@ def start_tf_sess(threads=-1, server=None, reuse=False):
         config.inter_op_parallelism_threads = threads
 
     if server is not None:
-        return tf.compat.v1.Session(target=server.target, config=config, reuse=reuse)
+        return tf.compat.v1.Session(target=server.target, config=config) # , reuse=reuse)
 
-    return tf.compat.v1.Session(config=config, reuse=reuse)
+    return tf.compat.v1.Session(config=config) # , reuse=reuse)
 
 
 def reset_session(sess, threads=-1, server=None):
