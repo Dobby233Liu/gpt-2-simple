@@ -91,7 +91,7 @@ def download_gpt2(model_dir='models', model_name='124M'):
                                     file_name=file_name)
 
 
-def start_tf_sess(threads=-1, server=None, reuse=False):
+def start_tf_sess(threads=-1, server=None):
     """
     Returns a tf.Session w/ config
     """
@@ -361,9 +361,10 @@ def finetune(sess,
 
             counter += 1
 
-    except KeyboardInterrupt:
+    except KeyboardInterrupt as e:
         print('Interrupted')
         save()
+        raise e
 
 
 def load_gpt2(sess,
