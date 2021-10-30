@@ -14,6 +14,7 @@ import time
 from datetime import datetime
 import csv
 import argparse
+from sys import exit
 
 # if in Google Colaboratory
 try:
@@ -25,10 +26,7 @@ from gpt_2_simple.src import model, sample, encoder, memory_saving_gradients
 from gpt_2_simple.src.load_dataset import load_dataset, Sampler
 from gpt_2_simple.src.accumulate import AccumulatingOptimizer
 
-assert tf.__version__ < '2.0.0', "gpt-2-simple currently does not support " \
-    "TensorFlow 2.0. You'll need to use a virtualenv/cloud computer which " \
-    "has Tensorflow 1.X on it."
-
+tf.compat.v1.disable_eager_execution()
 
 def download_file_with_progress(url_base, sub_dir, model_name, file_name):
     """General utility for incrementally downloading files from the internet
@@ -105,10 +103,9 @@ def start_tf_sess(threads=-1, server=None, reuse=False):
         config.inter_op_parallelism_threads = threads
 
     if server is not None:
-        return tf.compat.v1.Session(target=server.target, config=config) # , reuse=reuse)
+        return tf.compat.v1.Session(target=server.target, config=config)
 
-    return tf.compat.v1.Session(config=config) # , reuse=reuse)
-
+    return tf.compat.v1.Session(config=config)
 
 def reset_session(sess, threads=-1, server=None):
     """Resets the current TensorFlow session, to clear memory
@@ -146,7 +143,8 @@ def finetune(sess,
              use_memory_saving_gradients=False,
              only_train_transformer_layers=False,
              optimizer='adam',
-             overwrite=False):
+             overwrite=False,
+             reuse=False):
     """Finetunes the model on the given dataset.
 
     Adapted from https://github.com/nshepperd/gpt-2/blob/finetuning/train.py.
@@ -185,9 +183,10 @@ def finetune(sess,
             "Can't get samples longer than window size: %s" % hparams.n_ctx)
 
     if model_name not in ['117M', '124M']:
-        use_memory_saving_gradients = True
-        only_train_transformer_layers = True
-        accumulate_gradients = 1
+        print('For larger models, the recommended finetune() parameters are:')
+        print('\tuse_memory_saving_gradients = True')
+        print('\tonly_train_transformer_layers = True')
+        print('\taccumulate_gradients = 1\n')
 
     context = tf.compat.v1.placeholder(tf.int32, [batch_size, None])
     gpus = []
@@ -195,7 +194,7 @@ def finetune(sess,
     if multi_gpu:
         gpus = get_available_gpus()
 
-    output = model.model(hparams=hparams, X=context, gpus=gpus)
+    output = model.model(hparams=hparams, X=context, gpus=gpus, reuse=reuse)
     loss = tf.reduce_mean(
         input_tensor=tf.nn.sparse_softmax_cross_entropy_with_logits(
             labels=context[:, 1:], logits=output['logits'][:, :-1]))
@@ -215,6 +214,9 @@ def finetune(sess,
         opt = tf.compat.v1.train.AdamOptimizer(learning_rate=learning_rate)
     elif optimizer == 'sgd':
         opt = tf.compat.v1.train.GradientDescentOptimizer(learning_rate=learning_rate)
+
+    if tf.__version__ >= '2.0.0' and use_memory_saving_gradients:
+        exit("Memory saving gradients are not implemented for Tensorflow 2 yet.")
 
     if accumulate_gradients > 1:
         if use_memory_saving_gradients:
