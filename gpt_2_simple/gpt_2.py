@@ -15,6 +15,7 @@ from datetime import datetime
 import csv
 import argparse
 from sys import exit
+import codecs
 
 # if in Google Colaboratory
 try:
@@ -302,9 +303,9 @@ def finetune(sess,
                 index += 1
         print(text)
         maketree(os.path.join(SAMPLE_DIR, run_name))
-        with open(
+        with codecs.open(
                 os.path.join(SAMPLE_DIR, run_name,
-                             'samples-{}').format(counter), 'w', encoding='utf-8') as fp:
+                             'samples-{}').format(counter), 'w', 'utf8') as fp:
             fp.write('\n'.join(all_text))
 
     def sample_batch():
@@ -464,7 +465,7 @@ def generate(sess,
 
     output = sample.sample_sequence(
         hparams=hparams,
-        length=min(length, 1023 - (len(context_tokens) if prefix else 0)),
+        length=min(length, length - (len(context_tokens) if prefix else 0)),
         start_token=enc.encoder['<|endoftext|>'] if not prefix else None,
         context=context if prefix else None,
         batch_size=batch_size,
@@ -472,7 +473,7 @@ def generate(sess,
     )[:, 1:]
 
     if destination_path:
-        f = open(destination_path, 'w', encoding='utf-8')
+        f = codecs.open(destination_path, 'w', 'utf-8')
     generated = 0
     gen_texts = []
     while generated < nsamples:
@@ -620,8 +621,7 @@ def copy_file_from_gdrive(file_path):
     """Copies a file from a mounted Google Drive."""
     is_mounted()
 
-    file_name = os.path.split(file_path)[1]
-    shutil.copyfile("/content/drive/MyDrive/" + file_path, file_name)
+    shutil.copyfile("/content/drive/MyDrive/" + file_path, file_path)
 
 
 def is_gpt2_downloaded(model_dir='models', model_name='124M'):
